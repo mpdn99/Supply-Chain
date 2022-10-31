@@ -1,0 +1,218 @@
+version: '3.9'
+
+volumes:
+  orderer.example.com:
+  peer0.supplier.example.com:
+  peer0.manufacturer.example.com:
+  peer0.distributor.example.com:
+  peer0.retailer.example.com:
+  peer0.customer.exmaple.com:
+
+networks:
+  supplychain_network:
+
+services:
+  orderer.example.com:
+    container_name: orderer.example.com
+    image: hyperledger/fabric-orderer:latest
+    environment:
+      - FABRIC_LOGGING_SPEC=INFO
+      - ORDERER_GENERAL_LISTENADDRESS=0.0.0.0
+      - ORDERER_GENERAL_LISTENPORT=7050
+      - ORDERER_GENERAL_LOCALMSPID=OrdererMSP
+      - ORDERER_GENERAL_LOCALMSPDIR=/var/hyperledger/orderer/msp
+      - ORDERER_GENERAL_TLS_ENABLED=true
+      - ORDERER_GENERAL_TLS_PRIVATEKEY=/var/hyperledger/orderer/tls/server.key
+      - ORDERER_GENERAL_TLS_CERTIFICATE=/var/hyperledger/orderer/tls/server.crt
+      - ORDERER_GENERAL_TLS_ROOTCAS=[/var/hyperledger/orderer/tls/ca.crt]
+      - ORDERER_GENERAL_CLUSTER_CLIENTCERTIFICATE=/var/hyperledger/orderer/tls/server.crt
+      - ORDERER_GENERAL_CLUSTER_CLIENTPRIVATEKEY=/var/hyperledger/orderer/tls/server.key
+      - ORDERER_GENERAL_CLUSTER_ROOTCAS=[/var/hyperledger/orderer/tls/ca.crt]
+      - ORDERER_GENERAL_BOOTSTRAPMETHOD=none
+      - ORDERER_CHANNELPARTICIPATION_ENABLED=true
+      - ORDERER_ADMIN_TLS_ENABLED=true
+      - ORDERER_ADMIN_TLS_CERTIFICATE=/var/hyperledger/orderer/tls/server.crt
+      - ORDERER_ADMIN_TLS_PRIVATEKEY=/var/hyperledger/orderer/tls/server.key
+      - ORDERER_ADMIN_TLS_ROOTCAS=[/var/hyperledger/orderer/tls/ca.crt]
+      - ORDERER_ADMIN_TLS_CLIENTROOTCAS=[/var/hyperledger/orderer/tls/ca.crt]
+      - ORDERER_ADMIN_LISTENADDRESS=0.0.0.0:7053
+      - ORDERER_OPERATIONS_LISTENADDRESS=orderer.example.com:9443
+      - ORDERER_METRICS_PROVIDER=prometheus
+    working_dir: /root
+    command: order
+    volumes:
+      - ../organizations/ordererOrganizations/example.com/orderers/orderer.example.com/msp:/var/hyperledger/orderer/msp
+      - ../organizations/ordererOrganizations/example.com/orderers/orderer.example.com/tls/:/var/hyperledger/orderer/tls
+      - orderer.example.com:/var/hyperledger/production/orderer
+    ports:
+      - 7050:7050
+      - 7053:7053
+      - 9443:9443
+    networks:
+      - supplychain_network
+
+  peer0.supplier.example.com:
+    container_name: peer0.supplier.example.com
+    extends:
+      file: base/docker-compose-base.yaml
+      service: peer0.supplier.example.com
+    networks:
+      - supplychain_network
+
+  peer0.manufacturer.example.com:
+    container_name: peer0.manufacturer.example.com
+    extends:
+      file: base/docker-compose-base.yaml
+      service: peer0.manufacturer.example.com
+    networks:
+      - supplychain_network
+
+  peer0.distributor.example.com:
+    container_name: peer0.distributor.example.com
+    extends:
+      file: base/docker-compose-base.yaml
+      service: peer0.distributor.example.com
+    networks:
+      - supplychain_network
+
+  peer0.retailer.example.com:
+    container_name: peer0.retailer.example.com
+    extends:
+      file: base/docker-compose-base.yaml
+      service: peer0.retailer.example.com
+    networks:
+      - supplychain_network
+
+  peer0.customer.example.com:
+    container_name: peer0.customer.example.com
+    extends:
+      file: base/docker-compose-base.yaml
+      service: peer0.customer.example.com
+    networks:
+      - supplychain_network
+
+  ca.supplier.example.com:
+    container_name: ca.supplier.example.com
+    image: hyperldeger/fabric-ca:latest
+    environment:
+      - FABRIC_CA_HOME=/etc/hyperledger/fabric-ca-server
+      - FABRIC_CA_SERVER_CA_NAME=ca.supplier.example.com
+      - FABRIC_CA_SERVER_TLS_ENABLED=true
+      - FABRIC_CA_SERVER_TLS_CERTFILE=/etc/hyperledger/fabric-ca-server-config/ca.supplier.example.com-cert.pem
+      - FABRIC_CA_SERVER_TLS_KEYFILE=/etc/hyperledger/fabric-ca-server-config/${SUPPLIER_CA_PRIVATE_KEY}
+      - FABRIC_CA_SERVER_PORT=7054
+    volumes:
+      - ./network/crypto-config/peerOrganizations/supplier.example.com/ca/:/etc/hyperledger/fabric-ca-server-config
+    command: sh -c 'fabric-ca-server start --ca.certfile /etc/hyperledger/fabric-ca-server-config/ca.supplier.example.com-cert.pem --ca.keyfile /etc/hyperledger/fabric-ca-server-config/${SUPPLIER_CA_PRIVATE_KEY} -b admin:adminpw -d'
+    ports:
+      - 7054:7054
+    networks:
+      - supplychain_network
+
+  ca.manufacturer.example.com:
+    container_name: ca.manufacturer.example.com
+    image: hyperldeger/fabric-ca:latest
+    environment:
+      - FABRIC_CA_HOME=/etc/hyperledger/fabric-ca-server
+      - FABRIC_CA_SERVER_CA_NAME=ca.manufacturer.example.com
+      - FABRIC_CA_SERVER_TLS_ENABLED=true
+      - FABRIC_CA_SERVER_TLS_CERTFILE=/etc/hyperledger/fabric-ca-server-config/ca.manufacturer.example.com-cert.pem
+      - FABRIC_CA_SERVER_TLS_KEYFILE=/etc/hyperledger/fabric-ca-server-config/${MANUFACTURER_CA_PRIVATE_KEY}
+      - FABRIC_CA_SERVER_PORT=7054
+    volumes:
+      - ./network/crypto-config/peerOrganizations/manufacturer.example.com/ca/:/etc/hyperledger/fabric-ca-server-config
+    command: sh -c 'fabric-ca-server start --ca.certfile /etc/hyperledger/fabric-ca-server-config/ca.manufacturer.example.com-cert.pem --ca.keyfile /etc/hyperledger/fabric-ca-server-config/${MANUFACTURER_CA_PRIVATE_KEY} -b admin:adminpw -d'
+    ports:
+      - 8054:8054
+    networks:
+      - supplychain_network
+
+  ca.distributor.example.com:
+    container_name: ca.distributor.example.com
+    image: hyperldeger/fabric-ca:latest
+    environment:
+      - FABRIC_CA_HOME=/etc/hyperledger/fabric-ca-server
+      - FABRIC_CA_SERVER_CA_NAME=ca.distributor.example.com
+      - FABRIC_CA_SERVER_TLS_ENABLED=true
+      - FABRIC_CA_SERVER_TLS_CERTFILE=/etc/hyperledger/fabric-ca-server-config/ca.distributor.example.com-cert.pem
+      - FABRIC_CA_SERVER_TLS_KEYFILE=/etc/hyperledger/fabric-ca-server-config/${DISTRIBUTOR_CA_PRIVATE_KEY}
+      - FABRIC_CA_SERVER_PORT=7054
+    volumes:
+      - ./network/crypto-config/peerOrganizations/distributor.example.com/ca/:/etc/hyperledger/fabric-ca-server-config
+    command: sh -c 'fabric-ca-server start --ca.certfile /etc/hyperledger/fabric-ca-server-config/ca.distributor.example.com-cert.pem --ca.keyfile /etc/hyperledger/fabric-ca-server-config/${DISTRIBUTOR_CA_PRIVATE_KEY} -b admin:adminpw -d'
+    ports:
+      - 9054:9054
+    networks:
+      - supplychain_network
+
+  ca.retailer.example.com:
+    container_name: ca.retailer.example.com
+    image: hyperldeger/fabric-ca:latest
+    environment:
+      - FABRIC_CA_HOME=/etc/hyperledger/fabric-ca-server
+      - FABRIC_CA_SERVER_CA_NAME=ca.retailer.example.com
+      - FABRIC_CA_SERVER_TLS_ENABLED=true
+      - FABRIC_CA_SERVER_TLS_CERTFILE=/etc/hyperledger/fabric-ca-server-config/ca.retailer.example.com-cert.pem
+      - FABRIC_CA_SERVER_TLS_KEYFILE=/etc/hyperledger/fabric-ca-server-config/${RETAILER_CA_PRIVATE_KEY}
+      - FABRIC_CA_SERVER_PORT=7054
+    volumes:
+      - ./network/crypto-config/peerOrganizations/retailer.example.com/ca/:/etc/hyperledger/fabric-ca-server-config
+    command: sh -c 'fabric-ca-server start --ca.certfile /etc/hyperledger/fabric-ca-server-config/ca.retailer.example.com-cert.pem --ca.keyfile /etc/hyperledger/fabric-ca-server-config/${RETAILER_CA_PRIVATE_KEY} -b admin:adminpw -d'
+    ports:
+      - 10054:10054
+    networks:
+      - supplychain_network
+
+  ca.customer.example.com:
+    container_name: ca.customer.example.com
+    image: hyperldeger/fabric-ca:latest
+    environment:
+      - FABRIC_CA_HOME=/etc/hyperledger/fabric-ca-server
+      - FABRIC_CA_SERVER_CA_NAME=ca.customer.example.com
+      - FABRIC_CA_SERVER_TLS_ENABLED=true
+      - FABRIC_CA_SERVER_TLS_CERTFILE=/etc/hyperledger/fabric-ca-server-config/ca.customer.example.com-cert.pem
+      - FABRIC_CA_SERVER_TLS_KEYFILE=/etc/hyperledger/fabric-ca-server-config/${CUSTOMER_CA_PRIVATE_KEY}
+      - FABRIC_CA_SERVER_PORT=7054
+    volumes:
+      - ./network/crypto-config/peerOrganizations/customer.example.com/ca/:/etc/hyperledger/fabric-ca-server-config
+    command: sh -c 'fabric-ca-server start --ca.certfile /etc/hyperledger/fabric-ca-server-config/ca.customer.example.com-cert.pem --ca.keyfile /etc/hyperledger/fabric-ca-server-config/${CUSTOMER_CA_PRIVATE_KEY} -b admin:adminpw -d'
+    ports:
+      - 11054:11054
+    networks:
+      - supplychain_network
+
+  cli:
+    container_name: cli
+    image: hyperledger/fabric-tools:latest
+    tty: true
+    stdin_open: true
+    environment:
+      - SYS_CHANNEL=$SYS_CHANNEL
+      - GOPATH=/opt/gopath
+      - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
+      - FABRIC_LOGGING_SPEC=INFO
+      - CORE_PEER_ID=cli
+      - CORE_PEER_ADDRESS=peer0.supplier.example.com:7051
+      - CORE_PEER_LOCALMSPID=ManufacturerMSP
+      - CORE_PEER_TLS_ENABLED=true
+      - CORE_PEER_TLS_CERT_FILE=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/manufacturer.example.com/peers/peer0.manufacturer.example.com/tls/server.crt
+      - CORE_PEER_TLS_KEY_FILE=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/manufacturer.example.com/peers/peer0.manufacturer.example.com/tls/server.key
+      - CORE_PEER_TLS_ROOTCERT_FILE=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/manufacturer.example.com/peers/peer0.manufacturer.example.com/tls/ca.crt
+      - CORE_PEER_MSPCONFIGPATH=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/manufacturer.example.com/users/Admin@manufacturer.example.com/msp
+    working_dir: /opt/gopath/src/github.com/hyperledger/fabric/peer
+    command: /bin/bash
+    volumes:
+      - /var/run/:/host/var/run/
+      - ../chaincode/:/opt/gopath/src/github.com/chaincode/
+      - ./network/crypto-config/:/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/
+      - ../scripts/:/opt/gopath/src/github.com/hyperledger/fabric/peer/scripts/
+      - ./network/:/opt/gopath/src/github.com/hyperledger/fabric/peer/channel-artifacts/
+    depends_on:
+      - orderer.example.com
+      - peer0.supplier.example.com
+      - peer0.manufacturer.example.com
+      - peer0.distributor.example.com
+      - peer0.retailer.example.com
+      - peer0.customer.exmaple.com
+    networks:
+      - supplychain_network
