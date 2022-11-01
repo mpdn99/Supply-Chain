@@ -31,8 +31,8 @@ services:
     command: orderer
     volumes:
       - ../channel-artifacts/genesis.block:/var/hyperledger/orderer/orderer.genesis.block
-      - ../crypto-config/ordererOrganizations/example.com/orderers/orderer5.example.com/msp:/var/hyperledger/orderer/msp
-      - ../crypto-config/ordererOrganizations/example.com/orderers/orderer5.example.com/tls/:/var/hyperledger/orderer/tls
+      - ../organizations/ordererOrganizations/example.com/orderers/orderer5.example.com/msp:/var/hyperledger/orderer/msp
+      - ../organizations/ordererOrganizations/example.com/orderers/orderer5.example.com/tls/:/var/hyperledger/orderer/tls
       - orderer5.example.com:/var/hyperledger/production/orderer
     ports:
       - 11050:11050
@@ -58,8 +58,8 @@ services:
       command: peer node start
       volumes:
         - /var/run/:/host/var/run/
-        - ../crypto-config/peerOrganizations/customer.example.com/peers/peer0.customer.example.com/msp:/etc/hyperledger/fabric/msp
-        - ../crypto-config/peerOrganizations/customer.example.com/peers/peer0.customer.example.com/tls:/etc/hyperledger/fabric/tls
+        - ../organizations/peerOrganizations/customer.example.com/peers/peer0.customer.example.com/msp:/etc/hyperledger/fabric/msp
+        - ../organizations/peerOrganizations/customer.example.com/peers/peer0.customer.example.com/tls:/etc/hyperledger/fabric/tls
         - peer0.customer.example.com:/var/hyperledger/production
       ports:
         - 11051:11051
